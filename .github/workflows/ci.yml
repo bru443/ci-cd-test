@@ -1,42 +1,80 @@
-name: Test CI/CD
+# name: Test CI/CD
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   backend-test:
+#     runs-on: ubuntu-latest
+#     name: Build & Test Backend
+#     steps:
+#       - uses: actions/checkout@v3
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.10'
+#       - name: Install backend dependencies
+#         run: |
+#           cd backend
+#           pip install -r requirements.txt
+#       - name: Run backend test (curl check)
+#         run: |
+#           nohup python3 backend/app.py > log.txt 2>&1 &
+#           sleep 5
+#           curl --fail http://localhost:5000/ || (echo "Log output:" && cat log.txt && exit 1)
+
+
+#   frontend-test:
+#     runs-on: ubuntu-latest
+#     name: Build Frontend
+#     steps:
+#       - uses: actions/checkout@v3
+#       - name: Set up Node
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '18'
+#       - name: Install frontend dependencies and build
+#         run: |
+#           cd frontend
+#           npm install
+#           npm run build
+name: Build & Push to GHCR
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  backend-test:
+  backend-ghcr:
     runs-on: ubuntu-latest
-    name: Build & Test Backend
+    permissions:
+      packages: write
+      contents: read
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Install backend dependencies
-        run: |
-          cd backend
-          pip install -r requirements.txt
-      - name: Run backend test (curl check)
-        run: |
-          nohup python3 backend/app.py > log.txt 2>&1 &
-          sleep 5
-          curl --fail http://localhost:5000/ || (echo "Log output:" && cat log.txt && exit 1)
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Build & Push Backend
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/ci-cd-backend:latest -f backend/Dockerfile .
+          docker push ghcr.io/${{ github.repository_owner }}/ci-cd-backend:latest
 
-  frontend-test:
+  frontend-ghcr:
     runs-on: ubuntu-latest
-    name: Build Frontend
+    permissions:
+      packages: write
+      contents: read
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - name: Install frontend dependencies and build
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build & Push Frontend
         run: |
-          cd frontend
-          npm install
-          npm run build
+          docker build -t ghcr.io/${{ github.repository_owner }}/ci-cd-frontend:latest -f frontend/Dockerfile .
+          docker push ghcr.io/${{ github.repository_owner }}/ci-cd-frontend:latest
+
+
