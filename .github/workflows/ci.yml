@@ -21,9 +21,10 @@ jobs:
           pip install -r requirements.txt
       - name: Run backend test (curl check)
         run: |
-          nohup python3 backend/app.py &
+          nohup python3 backend/app.py > log.txt 2>&1 &
           sleep 5
-          curl http://127.0.0.1:5000/
+          curl --fail http://localhost:5000/ || (echo "Log output:" && cat log.txt && exit 1)
+
 
   frontend-test:
     runs-on: ubuntu-latest
