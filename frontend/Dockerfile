@@ -1,7 +1,7 @@
 FROM node:18 AS build
 
 WORKDIR /app
-COPY frontend/ ./
+COPY . ./
 RUN npm install && npm run build
 
 FROM nginx:alpine
