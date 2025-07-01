@@ -1,0 +1,41 @@
+name: Test CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    name: Build & Test Backend
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+      - name: Run backend test (curl check)
+        run: |
+          nohup python3 backend/app.py &
+          sleep 5
+          curl http://127.0.0.1:5000/
+
+  frontend-test:
+    runs-on: ubuntu-latest
+    name: Build Frontend
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install frontend dependencies and build
+        run: |
+          cd frontend
+          npm install
+          npm run build
